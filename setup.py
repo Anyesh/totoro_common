@@ -5,7 +5,7 @@ setup(
     version="0.0.1",
     author="Anish Shrestha",
     python_requires='>=3.11.5',
-    requires=[
+    install_requires=[
         "Flask>=2.2.2, <3.0.0",
         "PyJWT>=2.8.0 <3.0.0",
     ],
