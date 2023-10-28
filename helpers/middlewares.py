@@ -2,7 +2,7 @@ import os
 from functools import wraps
 
 import jwt
-from flask import current_app, request
+from flask import request, current_app
 
 from .exceptions import ApiException, NoDataProvidedApiException, OperationalException
 
@@ -44,10 +44,12 @@ def post_data_required(f):
     return wrapped
 
 
-def auth_requred(f):
+def auth_requred(f, app=None):
+    app = app or current_app
+
     @wraps(f)
     def wrapped(*args, **kwargs):
-        cookie_name = current_app.config.get("SESSION_COOKIE_NAME") or os.getenv(
+        cookie_name = app.config.get("SESSION_COOKIE_NAME") or os.getenv(
             "SESSION_COOKIE_NAME"
         )
         if not cookie_name:
@@ -55,15 +57,13 @@ def auth_requred(f):
                 "SESSION_COOKIE_NAME not set. Set that in .env file or in app config"
             )
 
-        algorithm = current_app.config.get("COOKIE_ALGORITHM") or os.getenv(
-            "COOKIE_ALGORITHM"
-        )
+        algorithm = app.config.get("COOKIE_ALGORITHM") or os.getenv("COOKIE_ALGORITHM")
         if not algorithm:
             raise OperationalException(
                 "COOKIE_ALGORITHM not set. Set that in .env file or in app config"
             )
 
-        secret_key = current_app.config.get("SECRET_KEY") or os.getenv("SECRET_KEY")
+        secret_key = app.config.get("SECRET_KEY") or os.getenv("SECRET_KEY")
         if not secret_key:
             raise OperationalException(
                 "SECRET_KEY not set. Set that in .env file or in app config"
@@ -71,12 +71,12 @@ def auth_requred(f):
 
         token = request.cookies.get(cookie_name)
         if not token:
-            raise ApiException("Unauthorized", 401)
-        if not hasattr(current_app, "redis"):
+            raise ApiException("Unauthorized: Invalid token", 401)
+        if not hasattr(app, "redis"):
             raise OperationalException("Redis not initialized")
 
-        if not current_app.redis.get(token):
-            raise ApiException("Unauthorized", 401)
+        if not app.redis.get(token):
+            raise ApiException("Unauthorized: Invalid redis token", 401)
 
         request.user = jwt.decode(token, secret_key, algorithms=[algorithm])
         return f(*args, **kwargs)

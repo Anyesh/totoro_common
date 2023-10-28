@@ -1,10 +1,15 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
 setup(
-    name="totoro_common",
+    name="totoro",
     version="0.0.1",
     author="Anish Shrestha",
-    packages=["totoro_common"],
-    package_dir={"totoro_common": "totoro_common"},
+    requires=[
+        "Flask==2.2.2",
+        "PyJWT==2.8.0",
+    ],
+    package_dir={
+        "totoro.helpers": "helpers",
+    },
     include_package_data=True,
 )
