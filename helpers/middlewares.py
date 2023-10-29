@@ -1,8 +1,9 @@
+import inspect
 import os
 from functools import wraps
 
 import jwt
-from flask import request, current_app
+from flask import current_app, request
 
 from .exceptions import ApiException, NoDataProvidedApiException, OperationalException
 
@@ -42,6 +43,25 @@ def post_data_required(f):
             return f(json_data, *args, **kwargs)
 
     return wrapped
+
+
+def parse_request_with(schema=None):
+    if schema and inspect.isclass(schema):
+        schema = schema()
+
+    def parser(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            json_data = request.get_json()
+            if json_data is None or json_data == {}:
+                raise NoDataProvidedApiException()
+            else:
+                json_data = schema.load(json_data) if schema else json_data
+            return f(json_data, *args, **kwargs)
+
+        return wrapped
+
+    return parser
 
 
 def auth_requred(f, app=None):
