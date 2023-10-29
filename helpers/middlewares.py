@@ -2,10 +2,10 @@ import inspect
 import os
 from functools import wraps
 
-import jwt
 from flask import current_app, request
 
 from .exceptions import ApiException, NoDataProvidedApiException, OperationalException
+from .token import decode_token
 
 
 def setup_prefix_middleware(app, prefix):
@@ -98,7 +98,7 @@ def auth_requred(f, app=None):
         if not app.redis.get(token):
             raise ApiException("Unauthorized: Invalid redis token", 401)
 
-        request.user = jwt.decode(token, secret_key, algorithms=[algorithm])
+        request.user = decode_token(token, secret_key, algorithm)
         return f(*args, **kwargs)
 
     return wrapped
