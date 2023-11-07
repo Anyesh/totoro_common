@@ -64,7 +64,7 @@ def parse_request_with(schema=None):
     return parser
 
 
-def auth_requred(f, app=None):
+def auth_required(f, app=None):
     app = app or current_app
 
     @wraps(f)
