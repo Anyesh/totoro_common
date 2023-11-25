@@ -2,7 +2,7 @@ import inspect
 import os
 from functools import wraps
 
-from flask import current_app, request
+from flask import current_app, g, request
 
 from .exceptions import ApiException, NoDataProvidedApiException, OperationalException
 from .token import decode_token
@@ -99,6 +99,9 @@ def auth_required(f, app=None):
             raise ApiException("Unauthorized: Invalid redis token", 401)
 
         request.user = decode_token(token, secret_key, algorithm)
+        # request.user will be deprecated soon
+
+        g.user = request.user
         return f(*args, **kwargs)
 
     return wrapped
