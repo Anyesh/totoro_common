@@ -4,6 +4,7 @@ from functools import wraps
 
 from flask import current_app, g, request
 
+from .constants import ROLE_SCORE, RoleEnum
 from .exceptions import ApiException, NoDataProvidedApiException, OperationalException
 from .token import decode_token
 
@@ -98,10 +99,29 @@ def auth_required(f, app=None):
         if not app.redis.get(token):
             raise ApiException("Unauthorized: Invalid redis token", 401)
 
-        request.user = decode_token(token, secret_key, algorithm)
+        user = decode_token(token, secret_key, algorithm)
+        if not user.get("user_role") or user.get("user_role") == RoleEnum.UNVERIFIED:
+            raise ApiException("Forbidden: Unverified user", 403)
+
+        request.user = user
         # request.user will be deprecated soon
 
-        g.user = request.user
+        g.user = user
+        return f(*args, **kwargs)
+
+    return wrapped
+
+
+def subscription_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        user = g.user or request.user
+        if not user:
+            raise ApiException("Unauthorized: User not initialized yet", 400)
+
+        if ROLE_SCORE.get(user.get("user_role")) < ROLE_SCORE.get(RoleEnum.FAMILY):
+            raise ApiException("Forbidden: Unauthorized user", 403)
+
         return f(*args, **kwargs)
 
     return wrapped
