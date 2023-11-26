@@ -1,7 +1,5 @@
 import jwt
 
-from helpers.exceptions import ApiException
-
 
 def generate_token(user_data, secret_key, algorithm):
     return jwt.encode(
@@ -12,16 +10,8 @@ def generate_token(user_data, secret_key, algorithm):
 
 
 def decode_token(token, secret_key, algorithm):
-    try:
-        return jwt.decode(
-            token,
-            secret_key,
-            algorithms=[algorithm],
-        )
-    except (
-        jwt.exceptions.InvalidSignatureError,
-        jwt.exceptions.DecodeError,
-        jwt.exceptions.InvalidAlgorithmError,
-        jwt.exceptions.InvalidKeyError,
-    ):
-        raise ApiException("Unauthorized: Invalid token", 401)
+    return jwt.decode(
+        token,
+        secret_key,
+        algorithms=[algorithm],
+    )
