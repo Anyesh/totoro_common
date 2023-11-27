@@ -130,7 +130,7 @@ def subscription_required(f):
 def is_internal(func):
     def wrapper(*args, **kwargs):
         if request.headers.get("internal-header") != "totoro-internal":
-            return ApiException("Forbidden: Not allowed"), 403
+            raise ApiException("Forbidden: Not allowed", 403)
         return func(*args, **kwargs)
 
     return wrapper
