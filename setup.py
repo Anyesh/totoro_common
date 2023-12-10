@@ -8,6 +8,7 @@ setup(
     install_requires=[
         "Flask==2.2.2",
         "PyJWT==2.8.0",
+        "requests==2.31.0",
     ],
     package_dir={
         "totoro.helpers": "helpers",
