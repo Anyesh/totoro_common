@@ -4,7 +4,7 @@ import requests
 from flask import current_app, g, request
 
 
-def create_session(app=None):
+def create_session(app=None, cookie=None):
     app = app or current_app
     cookie_name = app.config.get("SESSION_COOKIE_NAME") or os.getenv(
         "SESSION_COOKIE_NAME"
@@ -12,7 +12,7 @@ def create_session(app=None):
     if not cookie_name:
         raise ValueError("No session cookie name found")
 
-    cookies = request.cookies.get(cookie_name)
+    cookies = cookie or request.cookies.get(cookie_name)
     if not cookies:
         raise ValueError("No authentication cookie found")
 
