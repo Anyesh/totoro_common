@@ -3,6 +3,9 @@ import os
 import requests
 from flask import current_app, g, request
 
+from .token import decode_token
+from .exceptions import OperationalException
+
 
 def create_session(app=None, cookie=None):
     app = app or current_app
@@ -11,12 +14,27 @@ def create_session(app=None, cookie=None):
     )
     if not cookie_name:
         raise ValueError("No session cookie name found")
-
-    cookies = cookie or request.cookies.get(cookie_name)
-    if not cookies:
+    token = cookie or request.cookies.get(cookie_name)
+    if not token:
         raise ValueError("No authentication cookie found")
 
-    auth_cookie = {cookie_name: cookies}
+    if cookie is not None:
+        # Direct cookie was provided, decode it and set the user in the request context
+        secret_key = app.config.get("SECRET_KEY") or os.getenv("SECRET_KEY")
+        if not secret_key:
+            raise OperationalException(
+                "SECRET_KEY not set. Set that in .env file or in app config"
+            )
+        algorithm = app.config.get("COOKIE_ALGORITHM") or os.getenv("COOKIE_ALGORITHM")
+        if not algorithm:
+            raise OperationalException(
+                "COOKIE_ALGORITHM not set. Set that in .env file or in app config"
+            )
+        user = decode_token(cookie, secret_key, algorithm)
+        request.user = user
+        g.user = user
+
+    auth_cookie = {cookie_name: token}
 
     if "session" not in g:
         # Create a session object
