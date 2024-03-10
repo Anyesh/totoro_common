@@ -28,3 +28,8 @@ class NoDataProvidedApiException(ApiException):
 class ClientException(Exception):
     def __init__(self, message: str | None = None):
         super(ClientException, self).__init__(message)
+
+
+class TaskLockException(Exception):
+    def __init__(self, message: str | None = None):
+        super(TaskLockException, self).__init__(message)

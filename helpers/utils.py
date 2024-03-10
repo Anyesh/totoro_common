@@ -3,6 +3,12 @@ import re
 from functools import wraps
 
 from flask import current_app
+import logging
+
+from helpers.exceptions import TaskLockException
+
+logger = logging.getlogger("TotoroLogger")
+
 
 
 def regex_password_validator(password):
@@ -30,3 +36,27 @@ def cached_method(func):
         return res
 
     return wrapper
+
+
+def use_redis_lock(key, locking_data=1, ttl_min=None, release=False):
+    if ttl_min is None:
+        ttl_min = 2
+
+    redis = current_app.redis
+    lock_key = f"lock:{key}"
+    logger.info(f"[Lock] Locking key {lock_key}")
+
+    if release:
+        logger.info(f"[Lock] Releasing lock {lock_key}")
+        redis.delete(lock_key)
+        return
+
+    if redis.get(lock_key):
+        remaining_ttl = redis.ttl(lock_key)
+        logger.info(f"[Lock] Locking key {lock_key} is already locked")
+
+        raise TaskLockException(
+            f"Task is currently locked. Please wait {remaining_ttl} seconds.",
+        )
+    logger.info(f"[Lock] Locking key {lock_key} with data {locking_data}")
+    redis.setex(lock_key, 60 * ttl_min, locking_data)
