@@ -127,6 +127,21 @@ def subscription_required(f):
     return wrapped
 
 
+def role_required(f, required_role=RoleEnum.ADMIN):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        user = g.user or request.user
+        if not user:
+            raise ApiException("Unauthorized: User not initialized yet", 400)
+
+        if user.get("user_role") != required_role:
+            raise ApiException("Forbidden: Unauthorized user", 403)
+
+        return f(*args, **kwargs)
+
+    return wrapped
+
+
 def is_internal(func):
     def wrapper(*args, **kwargs):
         if request.headers.get("internal-header") != "totoro-internal":
