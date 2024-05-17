@@ -142,10 +142,14 @@ def role_required(f, required_role=RoleEnum.ADMIN):
     return wrapped
 
 
-def is_internal(func):
-    def wrapper(*args, **kwargs):
-        if request.headers.get("internal-header") != "totoro-internal":
-            raise ApiException("Forbidden: Not allowed", 403)
-        return func(*args, **kwargs)
+def is_internal(secret):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if request.headers.get("internal-header") != secret:
+                raise ApiException("Forbidden: Not allowed", 403)
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return decorator
