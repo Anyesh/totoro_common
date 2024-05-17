@@ -142,7 +142,7 @@ def role_required(f, required_role=RoleEnum.ADMIN):
     return wrapped
 
 
-def is_internal(secret="totoro-internal"):
+def is_internal(secret):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
