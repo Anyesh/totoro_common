@@ -1,17 +1,17 @@
 import json
+import logging
 import re
 from functools import wraps
+from typing import Any, Dict, TypeVar, Union
 
 from flask import current_app
-import logging
 
 from helpers.exceptions import TaskLockException
 
-logger = logging.getlogger("TotoroLogger")
+logger = logging.getLogger("TotoroLogger")
 
 
-
-def regex_password_validator(password):
+def regex_password_validator(password: str):
     if not re.search(
         r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&].{7,}$",
         password,
@@ -60,3 +60,38 @@ def use_redis_lock(key, locking_data=1, ttl_min=None, release=False):
         )
     logger.info(f"[Lock] Locking key {lock_key} with data {locking_data}")
     redis.setex(lock_key, 60 * ttl_min, locking_data)
+
+
+KT = TypeVar("KT")  # Key type
+VT = TypeVar("VT")  # Value type
+
+
+def safe_access(
+    dictionary: Dict[KT, Any], *keys: KT, default: VT | None = None
+) -> Union[Any, VT]:
+    """Safely access nested dictionary keys"""
+    try:
+        for key in keys:
+            dictionary = dictionary[key]
+        return dictionary
+    except (KeyError, TypeError):
+        return default
+
+
+def safe_get(data: Dict[KT, Any], key: KT, default: VT | None = None) -> Union[Any, VT]:
+    """Safely get a key from a dictionary"""
+    try:
+        return data[key]
+    except Exception:
+        return default
+
+
+def run_safely(func, *args, **kwargs):
+    """
+    Run a function and log any exceptions that occur
+    """
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        logger.exception(e)
+        return None

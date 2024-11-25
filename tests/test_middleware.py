@@ -13,7 +13,9 @@ class TestAuthRequiredDecorator(unittest.TestCase):
         self.app.config["COOKIE_ALGORITHM"] = "HS256"
         self.app.config["SECRET_KEY"] = "secret_key"
         self.fake_jwt_token = jwt.encode(
-            {"user": 1}, self.app.config["SECRET_KEY"], algorithm="HS256"
+            {"user": 1, "user_role": "user"},
+            self.app.config["SECRET_KEY"],
+            algorithm="HS256",
         )
 
     def test_auth_required_valid_token(self):
